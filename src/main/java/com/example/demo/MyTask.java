@@ -1,12 +1,14 @@
 package com.example.demo;
 
 import com.alibaba.fastjson.JSONObject;
+import org.apache.http.client.utils.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -33,7 +35,7 @@ public class MyTask implements ApplicationRunner {
                 JSONObject data = JSONObject.parseObject(roomInfo).getJSONObject("data");
                 long lastFeedTime = data.getLong("lastFeedTime");
                 long remainMillSeconds = periodMillSeconds - (System.currentTimeMillis() - lastFeedTime);
-                System.out.println("###### try start timer. delayMillSeconds=" + remainMillSeconds);
+                System.out.println("###### try start timer. delayMillSeconds=" + remainMillSeconds + ". time = " + DateUtils.formatDate(new Date(), "yyyy-MM-dd HH:mm:ss"));
 
                 Timer timer = new Timer(true);    //treu就是守护线程
                 //开始执行任务,第一个参数是任务,第二个是延迟时间,第三个是每隔多长时间执行一次
@@ -41,8 +43,21 @@ public class MyTask implements ApplicationRunner {
                     @Override
                     public void run() {
                         Integer feedNum = requester.getRightFeedNum(cookie, foodArrays);
-                        boolean bl = requester.feed(cookie, feedNum);
-                        System.out.println("### finished feed dog. result = " + bl + ", food num = " + feedNum);
+                        boolean feedResult = false;
+                        for (int i = 0; i < 5; i++) {
+                            feedResult = requester.feed(cookie, feedNum);
+                            System.out.println("### finished feed dog. result = " + feedResult + ", food num = " + feedNum +
+                                    ". time = " + DateUtils.formatDate(new Date(), "yyyy-MM-dd HH:mm:ss"));
+                            if (feedResult) {
+                                break;
+                            } else {
+                                try {
+                                    Thread.sleep(5000);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
                     }
                 }, remainMillSeconds, periodMillSeconds);
             } catch (Exception e) {

@@ -52,7 +52,11 @@ public class DogDataRequester {
             String json = RestTemplateUtils.getHttps(url, headers, 60, 60, 5);
             JSONObject obj = JSON.parseObject(json);
             String errorCode = obj.getString("errorCode");
-            return (StringUtils.equals("feed_ok", errorCode) || StringUtils.equals("level_upgrade", errorCode));
+            boolean result = (StringUtils.equals("feed_ok", errorCode) || StringUtils.equals("level_upgrade", errorCode));
+            if (!result) {
+                System.out.println("### failed feed info = " + json);
+            }
+            return result;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
