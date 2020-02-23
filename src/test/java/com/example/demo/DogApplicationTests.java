@@ -30,6 +30,7 @@ public class DogApplicationTests {
     public void feed() {
         String url = "https://draw.jdfcloud.com//pet/feed?feedCount=80";
         String cookie = "pt_key=AAJeH3ONADBp11cof76ZapZjzQeqB7g57JX9kzJ0xmvgsbNiMZ17FIvaimSe-dVB2CBa_ZwHrW8";
+//        String cookie = "pt_key=AAJeOj0hADAjFj4EcGOubyjtvguEtk8yNNCTqq78eaAP4gstGfcIEgWK80ElhZCEXYREEUWqTWc";
         Map<String, String> headers = geneHeaders(cookie);
         String json = RestTemplateUtils.getHttps(url, headers, 60, 60, 5);
         System.out.println(json);
