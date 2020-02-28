@@ -1,6 +1,11 @@
 package com.example.demo;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.example.demo.earnfood.Worker;
+import com.example.demo.earnfood.WorkerFactory;
+import com.example.demo.util.ThreadUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -8,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.Date;
+import java.util.Iterator;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -41,27 +47,58 @@ public class MyTask implements ApplicationRunner {
                 timer.schedule(new TimerTask() {
                     @Override
                     public void run() {
-                        Integer feedNum = requester.getRightFeedNum(cookie, foodArrays);
-                        boolean feedResult = false;
-                        for (int i = 0; i < 5; i++) {
-                            feedResult = requester.feed(cookie, feedNum);
-                            System.out.println("### finished feed dog. result = " + feedResult + ", food num = " + feedNum +
-                                    ". time = " + new Date().toLocaleString());
-                            if (feedResult) {
-                                break;
-                            } else {
-                                try {
-                                    Thread.sleep(5000);
-                                } catch (InterruptedException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        }
+                        // 喂狗
+                        feedDog();
+                        // 做任务
+                        earnFoodTask();
                     }
                 }, remainMillSeconds, periodMillSeconds);
+//                }, 1, periodMillSeconds);
             } catch (Exception e) {
                 System.out.println("### error when parse room info...feed directly..");
                 requester.feed(cookie, 10);
+            }
+        }
+    }
+
+    private void earnFoodTask() {
+        int hour = new Date().getHours();
+        // 8-24点做任务
+        if (hour > 7) {
+            String resp = requester.getAllTask(cookie);
+            if (null != resp) {
+                JSONObject obj = JSON.parseObject(resp);
+                String errorCode = obj.getString("errorCode");
+                boolean result = (null == errorCode || StringUtils.pathEquals("null", errorCode));
+                if (!result) {
+                    System.out.println("### failed getAllTask = " + resp);
+                    return;
+                }
+
+                JSONArray array = obj.getJSONArray("datas");
+                Iterator<Object> it = array.iterator();
+                while (it.hasNext()) {
+                    JSONObject taskCategory = (JSONObject) it.next();
+                    String taskType = taskCategory.getString("taskType");
+                    Worker worker = WorkerFactory.getWorkerByType(taskType);
+                    worker.doJob(cookie, taskCategory);
+                    ThreadUtil.sleepRandomSeconds(3, 5);
+                }
+            }
+        }
+    }
+
+    private void feedDog() {
+        Integer feedNum = requester.getRightFeedNum(cookie, foodArrays);
+        boolean feedResult = false;
+        for (int i = 0; i < 5; i++) {
+            feedResult = requester.feed(cookie, feedNum);
+            System.out.println("### finished feed dog. result = " + feedResult + ", food num = " + feedNum +
+                    ". time = " + new Date().toLocaleString());
+            if (feedResult) {
+                break;
+            } else {
+                ThreadUtil.sleepSeconds(5);
             }
         }
     }
