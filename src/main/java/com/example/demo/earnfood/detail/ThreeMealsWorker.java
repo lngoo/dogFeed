@@ -26,7 +26,7 @@ public class ThreeMealsWorker extends Worker {
         int taskChance = obj.getInteger("taskChance");
         if (taskChance > 0) {
             boolean result = doSingleTask(cookie);
-            System.out.println("### [" +new Date().toLocaleString()+ "] three meals result = " + result);
+            System.out.println("### [cookie=" + cookie + "] [" +new Date().toLocaleString()+ "] three meals result = " + result);
         }
     }
 
@@ -35,7 +35,7 @@ public class ThreeMealsWorker extends Worker {
             String url = "https://draw.jdfcloud.com//pet/getFood?taskType=ThreeMeals";
             Map<String, String> headers = geneHeaders(cookie);
             String result = RestTemplateUtils.getHttps(url, headers, 60, 60, 5);
-            return result.contains("\"errorCode\":\"received\"");
+            return result.contains("\"success\":true");
         } catch (Exception e) {
             e.printStackTrace();
             return false;

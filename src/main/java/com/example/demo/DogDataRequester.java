@@ -103,4 +103,20 @@ public class DogDataRequester {
             return null;
         }
     }
+
+    /**
+     * 桌面任务列表
+     * @param cookie
+     * @return
+     */
+    public String getDeskTaskList(String cookie) {
+        try {
+            String url = "https://draw.jdfcloud.com//pet/getDeskGoodDetails";
+            Map<String, String> headers = geneHeaders(cookie);
+            return RestTemplateUtils.getHttps(url, headers, 60, 60, 5);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }

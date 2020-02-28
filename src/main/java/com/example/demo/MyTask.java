@@ -33,14 +33,14 @@ public class MyTask implements ApplicationRunner {
     public void run(ApplicationArguments args) throws Exception {
         String roomInfo = requester.getEnterRoomInfo(cookie);
         if (StringUtils.isEmpty(roomInfo)) {
-            System.out.println("### error when get room info...feed directly..");
+            System.out.println("### [cookie=" + cookie + "] error when get room info...feed directly..");
             requester.feed(cookie, 10);
         } else {
             try {
                 JSONObject data = JSONObject.parseObject(roomInfo).getJSONObject("data");
                 long lastFeedTime = data.getLong("lastFeedTime");
                 long remainMillSeconds = periodMillSeconds - (System.currentTimeMillis() - lastFeedTime);
-                System.out.println("###### try start timer. delayMillSeconds=" + remainMillSeconds + ". time = " + new Date().toLocaleString());
+                System.out.println("### [cookie=" + cookie + "] try start timer. delayMillSeconds=" + remainMillSeconds + ". time = " + new Date().toLocaleString());
 
                 Timer timer = new Timer(true);    //treu就是守护线程
                 //开始执行任务,第一个参数是任务,第二个是延迟时间,第三个是每隔多长时间执行一次
@@ -52,10 +52,10 @@ public class MyTask implements ApplicationRunner {
                         // 做任务
                         earnFoodTask();
                     }
+//                }, remainMillSeconds, periodMillSeconds);
                 }, remainMillSeconds, periodMillSeconds);
-//                }, 1, periodMillSeconds);
             } catch (Exception e) {
-                System.out.println("### error when parse room info...feed directly..");
+                System.out.println("### [cookie=" + cookie + "] error when parse room info...feed directly..");
                 requester.feed(cookie, 10);
             }
         }
@@ -65,25 +65,65 @@ public class MyTask implements ApplicationRunner {
         int hour = new Date().getHours();
         // 8-24点做任务
         if (hour > 7) {
-            String resp = requester.getAllTask(cookie);
-            if (null != resp) {
-                JSONObject obj = JSON.parseObject(resp);
-                String errorCode = obj.getString("errorCode");
-                boolean result = (null == errorCode || StringUtils.pathEquals("null", errorCode));
-                if (!result) {
-                    System.out.println("### failed getAllTask = " + resp);
-                    return;
-                }
+            // 通用任务
+            commonEarnTask();
 
-                JSONArray array = obj.getJSONArray("datas");
+            // 特殊桌面任务
+            deskEarnTask();
+        }
+    }
+
+    private void deskEarnTask() {
+        String resp = requester.getDeskTaskList(cookie);
+        if (null != resp) {
+            JSONObject obj = JSON.parseObject(resp);
+            String errorCode = obj.getString("errorCode");
+            boolean result = (null == errorCode || StringUtils.pathEquals("null", errorCode));
+            if (!result) {
+                System.out.println("### [cookie=" + cookie + "] failed get desk goods list = " + resp);
+                return;
+            }
+
+            JSONObject data = obj.getJSONObject("data");
+            int taskChance = data.getInteger("taskChance");
+            if (taskChance > 0) {
+                JSONArray array = data.getJSONArray("deskGoods");
                 Iterator<Object> it = array.iterator();
+                Worker worker = WorkerFactory.getWorkerByType("deskGoods");
+                int tempCount = 0;
                 while (it.hasNext()) {
-                    JSONObject taskCategory = (JSONObject) it.next();
-                    String taskType = taskCategory.getString("taskType");
-                    Worker worker = WorkerFactory.getWorkerByType(taskType);
-                    worker.doJob(cookie, taskCategory);
+                    if (tempCount == taskChance) {
+                        break;
+                    }
+                    JSONObject goodInfo = (JSONObject) it.next();
+                    worker.doJob(cookie, goodInfo);
                     ThreadUtil.sleepRandomSeconds(3, 5);
+                    tempCount++;
                 }
+            }
+        }
+    }
+
+    private void commonEarnTask() {
+        String resp = requester.getAllTask(cookie);
+        if (null != resp) {
+            JSONObject obj = JSON.parseObject(resp);
+            String errorCode = obj.getString("errorCode");
+            boolean result = (null == errorCode || StringUtils.pathEquals("null", errorCode));
+            if (!result) {
+                System.out.println("### [cookie=" + cookie + "] failed getAllTask = " + resp);
+                return;
+            }
+
+            JSONArray array = obj.getJSONArray("datas");
+            Iterator<Object> it = array.iterator();
+            while (it.hasNext()) {
+                JSONObject taskCategory = (JSONObject) it.next();
+                String taskType = taskCategory.getString("taskType");
+                Worker worker = WorkerFactory.getWorkerByType(taskType);
+                worker.doJob(cookie, taskCategory);
+                // 每一种之间间隔时间
+                ThreadUtil.sleepRandomSeconds(3, 5);
             }
         }
     }
@@ -93,7 +133,7 @@ public class MyTask implements ApplicationRunner {
         boolean feedResult = false;
         for (int i = 0; i < 5; i++) {
             feedResult = requester.feed(cookie, feedNum);
-            System.out.println("### finished feed dog. result = " + feedResult + ", food num = " + feedNum +
+            System.out.println("### [cookie=" + cookie + "] finished feed dog. result = " + feedResult + ", food num = " + feedNum +
                     ". time = " + new Date().toLocaleString());
             if (feedResult) {
                 break;

@@ -38,27 +38,11 @@ public class FollowShopWorker extends Worker {
                     int shopId = object.getInteger("shopId");
                     ThreadUtil.sleepRandomSeconds(6, 8);
                     boolean singleResult = doSingleTask(cookie, shopId);
-                    System.out.println("### [" +new Date().toLocaleString()+ "] FollowShop result = " + singleResult + ", shopID="+shopId);
+                    System.out.println("### [cookie=" + cookie + "] [" +new Date().toLocaleString()+ "] FollowShop result = " + singleResult + ", shopID="+shopId);
                 }
             }
         }
     }
-//
-//    private boolean doSingleTask(String cookie, int shopId) {
-//        try {
-//            String url = "https://draw.jdfcloud.com//pet/followShop";
-//            Map<String, String> headers = geneHeaders(cookie);
-//
-//            JSONObject params = new JSONObject();
-//            params.put("shopId", shopId);
-//
-//            String result = RestTemplateUtils.postHttps(url, params, headers, 60, 60, 5);
-//            return result.contains("\"errorCode\":\"success\"");
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            return false;
-//        }
-//    }
 
     private boolean doSingleTask(String cookie, int shopId) {
         try {
@@ -76,7 +60,7 @@ public class FollowShopWorker extends Worker {
                     .asString();
             String result = response.getBody();
             System.out.println(result);
-            return result.contains("\"errorCode\":\"success\"");
+            return result.contains("\"success\":true");
         } catch (Exception e) {
             e.printStackTrace();
             return false;
