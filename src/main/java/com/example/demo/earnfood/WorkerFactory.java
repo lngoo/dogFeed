@@ -7,16 +7,16 @@ public class WorkerFactory {
 
     public static Worker getWorkerByType(String taskType){
         switch (taskType) {
-//            case "FollowShop" :
-//                return FollowShopWorker.getInstance();
-//            case "ThreeMeals" :
-//                return ThreeMealsWorker.getInstance();
-//            case "FollowGood" :
-//                return FollowGoodWorker.getInstance();
-//            case "FollowChannel" :
-//                return FollowChannelWorker.getInstance();
-//            case "ScanMarket" :
-//                return ScanMarketWorker.getInstance();
+            case "FollowShop" :
+                return FollowShopWorker.getInstance();
+            case "ThreeMeals" :
+                return ThreeMealsWorker.getInstance();
+            case "FollowGood" :
+                return FollowGoodWorker.getInstance();
+            case "FollowChannel" :
+                return FollowChannelWorker.getInstance();
+            case "ScanMarket" :
+                return ScanMarketWorker.getInstance();
             case "deskGoods" :
                 return DeskGoodsWorker.getInstance();
             default:

@@ -22,7 +22,7 @@ public class FollowChannelWorker extends Worker {
     }
 
     @Override
-    public void doJob(String cookie, JSONObject obj) {
+    public void doJob(String cookieKey, String cookie, JSONObject obj) {
         int taskChance = obj.getInteger("taskChance");
         if (taskChance > 0) {
             JSONArray array = obj.getJSONArray("followChannelList");
@@ -35,14 +35,14 @@ public class FollowChannelWorker extends Worker {
                 } else {
                     String channelId = object.getString("channelId");
                     ThreadUtil.sleepRandomSeconds(6, 8);
-                    boolean singleResult = doSingleTask(cookie, channelId);
-                    System.out.println("### [cookie=" + cookie + "] [" + new Date().toLocaleString() + "] FollowChannel result = " + singleResult + ", channelId=" + channelId);
+                    boolean singleResult = doSingleTask(cookieKey, cookie, channelId);
+                    System.out.println("### [cookie=" + cookieKey + "] [" + new Date().toLocaleString() + "] FollowChannel result = " + singleResult + ", channelId=" + channelId);
                 }
             }
         }
     }
 
-    private boolean doSingleTask(String cookie, String channelId) {
+    private boolean doSingleTask(String cookieKey, String cookie, String channelId) {
         try {
             Unirest.setTimeouts(0, 0);
             HttpResponse<String> response = Unirest.post("https://draw.jdfcloud.com//pet/scan")
@@ -56,8 +56,11 @@ public class FollowChannelWorker extends Worker {
                     .asString();
 
             String result = response.getBody();
-            System.out.println(result);
-            return result.contains("\"success\":true");
+            boolean flag = result.contains("\"success\":true");
+            if (!flag) {
+                System.out.println("### [cookie=" + cookieKey + "] = " + result);
+            }
+            return flag;
         } catch (Exception e) {
             e.printStackTrace();
             return false;

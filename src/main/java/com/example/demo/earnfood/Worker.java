@@ -7,7 +7,7 @@ import java.util.Map;
 
 public abstract class Worker {
 
-    public abstract void doJob(String cookie, JSONObject obj);
+    public abstract void doJob(String cookieKey, String cookie, JSONObject obj);
 
     protected Map<String, String> geneHeaders(String cookie) {
         Map<String, String> map = new HashMap<>();

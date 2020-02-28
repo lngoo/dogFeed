@@ -24,7 +24,7 @@ public class FollowGoodWorker extends Worker {
     }
 
     @Override
-    public void doJob(String cookie, JSONObject obj) {
+    public void doJob(String cookieKey, String cookie, JSONObject obj) {
         int taskChance = obj.getInteger("taskChance");
         if (taskChance > 0) {
             JSONArray array = obj.getJSONArray("followGoodList");
@@ -37,16 +37,16 @@ public class FollowGoodWorker extends Worker {
                 } else {
                     String sku = object.getString("sku");
                     ThreadUtil.sleepRandomSeconds(6, 8);
-                    boolean singleResult = doSingleTask(cookie, sku);
+                    boolean singleResult = doSingleTask(cookieKey, cookie, sku);
                     if (singleResult) {
-                        System.out.println("### [cookie=" + cookie + "]  [" +new Date().toLocaleString()+ "] FollowGood result = " + singleResult + ", sku ="+sku);
+                        System.out.println("### [cookie=" + cookieKey + "]  [" +new Date().toLocaleString()+ "] FollowGood result = " + singleResult + ", sku ="+sku);
                     }
                 }
             }
         }
     }
 
-    private boolean doSingleTask(String cookie, String sku) {
+    private boolean doSingleTask(String cookieKey, String cookie, String sku) {
         try {
             Unirest.setTimeouts(0, 0);
             HttpResponse<String> response = Unirest.post("https://draw.jdfcloud.com//pet/followGood")
@@ -61,7 +61,11 @@ public class FollowGoodWorker extends Worker {
                     .field("sku", sku)
                     .asString();
             String result = response.getBody();
-            return result.contains("\"success\":true");
+            boolean flag = result.contains("\"success\":true");
+            if (!flag) {
+                System.out.println("### [cookie=" + cookieKey + "] = " + result);
+            }
+            return flag;
         } catch (Exception e) {
             e.printStackTrace();
             return false;

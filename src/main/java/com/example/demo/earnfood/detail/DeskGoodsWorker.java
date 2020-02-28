@@ -20,14 +20,14 @@ public class DeskGoodsWorker extends Worker {
     }
 
     @Override
-    public void doJob(String cookie, JSONObject goodInfo) {
+    public void doJob(String cookieKey, String cookie, JSONObject goodInfo) {
         String sku = goodInfo.getString("sku");
         ThreadUtil.sleepRandomSeconds(6, 8);
-        boolean singleResult = doSingleTask(cookie, sku);
-        System.out.println("### [cookie=" + cookie + "] [" + new Date().toLocaleString() + "] DeskGoods result = " + singleResult + ", sku=" + sku);
+        boolean singleResult = doSingleTask(cookieKey, cookie, sku);
+        System.out.println("### [cookie=" + cookieKey + "] [" + new Date().toLocaleString() + "] DeskGoods result = " + singleResult + ", sku=" + sku);
     }
 
-    private boolean doSingleTask(String cookie, String sku) {
+    private boolean doSingleTask(String cookieKey, String cookie, String sku) {
         try {
             Unirest.setTimeouts(0, 0);
             HttpResponse<String> response = Unirest.post("https://draw.jdfcloud.com//pet/scan")
@@ -41,7 +41,11 @@ public class DeskGoodsWorker extends Worker {
                     .asString();
 
             String result = response.getBody();
-            return result.contains("\"success\":true");
+            boolean flag = result.contains("\"success\":true");
+            if (!flag) {
+                System.out.println("### [cookie=" + cookieKey + "] = " + result);
+            }
+            return flag;
         } catch (Exception e) {
             e.printStackTrace();
             return false;

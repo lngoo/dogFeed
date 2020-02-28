@@ -15,7 +15,7 @@ public class NotSupportWorker extends Worker {
     }
 
     @Override
-    public void doJob(String cookie, JSONObject obj) {
+    public void doJob(String cookieKey, String cookie, JSONObject obj) {
 
     }
 }
