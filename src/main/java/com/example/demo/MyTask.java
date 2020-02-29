@@ -64,16 +64,19 @@ public class MyTask implements Callable<Boolean> {
 
     private void earnFoodTask() {
         int hour = new Date().getHours();
-        // 8-24点做任务
-        if (hour > 7) {
+        // 8-22点做任务
+        if (hour > 7 && hour < 23) {
             // 只做2轮
             int doneNum = earnTaskDoneNum.get(cookieKey);
             if (doneNum < 3) {
                 // 通用任务
-                commonEarnTask();
+                commonEarnTask(true);
                 // 特殊桌面任务
                 deskEarnTask();
                 earnTaskDoneNum.put(cookieKey, doneNum + 1);
+            } else {
+                // 只做三餐任务
+                commonEarnTask(false);
             }
         } else {
             earnTaskDoneNum.put(cookieKey, 0);
@@ -111,7 +114,11 @@ public class MyTask implements Callable<Boolean> {
         }
     }
 
-    private void commonEarnTask() {
+    /**
+     * 是否做全部任务，false时只做三餐任务
+     * @param isAll
+     */
+    private void commonEarnTask(boolean isAll) {
         String resp = requester.getAllTask(cookie);
         if (null != resp) {
             JSONObject obj = JSON.parseObject(resp);
@@ -127,6 +134,9 @@ public class MyTask implements Callable<Boolean> {
             while (it.hasNext()) {
                 JSONObject taskCategory = (JSONObject) it.next();
                 String taskType = taskCategory.getString("taskType");
+                if (!StringUtils.pathEquals("ThreeMeals", taskType) && !isAll) {
+                    continue;
+                }
                 Worker worker = WorkerFactory.getWorkerByType(taskType);
                 worker.doJob(cookieKey, cookie, taskCategory);
                 // 每一种之间间隔时间
