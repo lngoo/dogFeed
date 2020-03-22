@@ -1,5 +1,6 @@
 package com.example.demo;
 
+import com.example.demo.vo.StealInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -14,7 +15,7 @@ import java.util.concurrent.Executors;
 @Service
 public class TaskStarter implements ApplicationRunner {
     private static Map<String, String> cookieMap = new HashMap<>();
-    private static Map<String, Integer> earnTaskDoneNum = new ConcurrentHashMap<>();
+    private static Map<String, StealInfo> stealCounter = new ConcurrentHashMap<>();
     static {
         cookieMap.put("181", "pt_key=AAJeH3ONADBp11cof76ZapZjzQeqB7g57JX9kzJ0xmvgsbNiMZ17FIvaimSe-dVB2CBa_ZwHrW8");
         cookieMap.put("152", "pt_key=AAJeWMxXADAhM5suAOxUdds4vH4UH3_3KdhxHJHjIyxewTiEfEAw7IqY3ddiaPC-JnHzGHoC6So");
@@ -29,8 +30,8 @@ public class TaskStarter implements ApplicationRunner {
     public void run(ApplicationArguments args) throws Exception {
         ExecutorService service = Executors.newScheduledThreadPool(cookieMap.size());
         for (String key : cookieMap.keySet()) {
-            earnTaskDoneNum.put(key, 0);
-            service.submit(new MyTask(key, cookieMap.get(key), requester, earnTaskDoneNum));
+            stealCounter.put(key, new StealInfo());
+            service.submit(new MyTask(key, cookieMap.get(key), requester, stealCounter));
         }
     }
 }

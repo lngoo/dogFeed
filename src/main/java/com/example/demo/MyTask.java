@@ -5,7 +5,9 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.example.demo.earnfood.Worker;
 import com.example.demo.earnfood.WorkerFactory;
+import com.example.demo.earnfood.detail.StealFoodAndCoinWorker;
 import com.example.demo.util.ThreadUtil;
+import com.example.demo.vo.StealInfo;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
@@ -20,13 +22,13 @@ public class MyTask implements Callable<Boolean> {
     private String cookieKey;
     private String cookie;
     private DogDataRequester requester;
-    private Map<String, Integer> earnTaskDoneNum;
+    private Map<String, StealInfo> stealCounter;
 
-    public MyTask(String key, String cookie, DogDataRequester requester, Map<String, Integer> earnTaskDoneNum) {
+    public MyTask(String key, String cookie, DogDataRequester requester, Map<String, StealInfo> stealCounter) {
         this.cookieKey = key;
         this.cookie = cookie;
         this.requester = requester;
-        this.earnTaskDoneNum = earnTaskDoneNum;
+        this.stealCounter = stealCounter;
     }
 
     @Override
@@ -64,23 +66,28 @@ public class MyTask implements Callable<Boolean> {
 
     private void earnFoodTask() {
         int hour = new Date().getHours();
-        // 8-22点做任务
-        if (hour > 7 && hour < 23) {
-            // 只做2轮
-            int doneNum = earnTaskDoneNum.get(cookieKey);
-            if (doneNum < 3) {
-                // 通用任务
-                commonEarnTask(true);
-                // 特殊桌面任务
-                deskEarnTask();
-                earnTaskDoneNum.put(cookieKey, doneNum + 1);
-            } else {
-                // 只做三餐任务
-                commonEarnTask(false);
-            }
+        // 7-22点做任务
+        if (hour > 6 && hour < 23) {
+            // 通用任务
+            commonEarnTask();
+            // 特殊桌面任务
+            deskEarnTask();
+            // 偷粮食
+            stealFoodAndCoin();
         } else {
-            earnTaskDoneNum.put(cookieKey, 0);
+            // 清空计数器
+            Iterator<StealInfo> it = stealCounter.values().iterator();
+            while (it.hasNext()) {
+                StealInfo info = it.next();
+                info.clear();
+            }
         }
+    }
+
+    private void stealFoodAndCoin() {
+        StealFoodAndCoinWorker worker = (StealFoodAndCoinWorker) StealFoodAndCoinWorker.getInstance();
+        worker.doRealJob(cookieKey, cookie, stealCounter.get(cookieKey));
+        ThreadUtil.sleepRandomSeconds(3, 5);
     }
 
     private void deskEarnTask() {
@@ -96,16 +103,22 @@ public class MyTask implements Callable<Boolean> {
 
             JSONObject data = obj.getJSONObject("data");
             int taskChance = data.getInteger("taskChance");
-            if (taskChance > 0) {
+            Object followCount = data.get("followCount");
+            if (null == followCount || ((Integer) followCount) < taskChance) {
                 JSONArray array = data.getJSONArray("deskGoods");
                 Iterator<Object> it = array.iterator();
-                Worker worker = WorkerFactory.getWorkerByType("deskGoods");
-                int tempCount = 0;
+                int tempCount = (null == followCount ? 0 : (Integer) followCount);
                 while (it.hasNext()) {
                     if (tempCount == taskChance) {
                         break;
                     }
                     JSONObject goodInfo = (JSONObject) it.next();
+                    boolean status = goodInfo.getBoolean("status");
+                    // 已经做过就不做了
+                    if (status) {
+                        continue;
+                    }
+                    Worker worker = WorkerFactory.getWorkerByType("deskGoods");
                     worker.doJob(cookieKey, cookie, goodInfo);
                     ThreadUtil.sleepRandomSeconds(3, 5);
                     tempCount++;
@@ -116,9 +129,9 @@ public class MyTask implements Callable<Boolean> {
 
     /**
      * 是否做全部任务，false时只做三餐任务
-     * @param isAll
+     *
      */
-    private void commonEarnTask(boolean isAll) {
+    private void commonEarnTask() {
         String resp = requester.getAllTask(cookie);
         if (null != resp) {
             JSONObject obj = JSON.parseObject(resp);
@@ -134,9 +147,6 @@ public class MyTask implements Callable<Boolean> {
             while (it.hasNext()) {
                 JSONObject taskCategory = (JSONObject) it.next();
                 String taskType = taskCategory.getString("taskType");
-                if (!StringUtils.pathEquals("ThreeMeals", taskType) && !isAll) {
-                    continue;
-                }
                 Worker worker = WorkerFactory.getWorkerByType(taskType);
                 worker.doJob(cookieKey, cookie, taskCategory);
                 // 每一种之间间隔时间
@@ -148,7 +158,7 @@ public class MyTask implements Callable<Boolean> {
     private void feedDog() {
         Integer feedNum = requester.getRightFeedNum(cookie, foodArrays);
         boolean feedResult = false;
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 3; i++) {
             feedResult = requester.feed(cookie, feedNum);
             System.out.println("### [cookie=" + cookieKey + "] finished feed dog. result = " + feedResult + ", food num = " + feedNum +
                     ". time = " + new Date().toLocaleString());

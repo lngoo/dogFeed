@@ -24,7 +24,8 @@ public class ThreeMealsWorker extends Worker {
     @Override
     public void doJob(String cookieKey, String cookie, JSONObject obj) {
         int taskChance = obj.getInteger("taskChance");
-        if (taskChance > 0) {
+        Object followCount = obj.get("joinedCount");
+        if (null == followCount || taskChance > ((Integer)followCount)) {
             boolean result = doSingleTask(cookieKey, cookie);
             System.out.println("### [cookie=" + cookieKey + "] [" +new Date().toLocaleString()+ "] three meals result = " + result);
         }

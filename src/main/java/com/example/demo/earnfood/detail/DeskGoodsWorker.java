@@ -9,7 +9,7 @@ import com.mashape.unirest.http.Unirest;
 import java.util.Date;
 
 /**
- * 关注频道
+ * 桌面商品
  */
 public class DeskGoodsWorker extends Worker {
 
@@ -21,6 +21,7 @@ public class DeskGoodsWorker extends Worker {
 
     @Override
     public void doJob(String cookieKey, String cookie, JSONObject goodInfo) {
+
         String sku = goodInfo.getString("sku");
         ThreadUtil.sleepRandomSeconds(6, 8);
         boolean singleResult = doSingleTask(cookieKey, cookie, sku);

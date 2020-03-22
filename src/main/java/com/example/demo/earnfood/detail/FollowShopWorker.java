@@ -26,7 +26,8 @@ public class FollowShopWorker extends Worker {
     @Override
     public void doJob(String cookieKey, String cookie, JSONObject obj) {
         int taskChance = obj.getInteger("taskChance");
-        if (taskChance > 0) {
+        Object followCount = obj.get("joinedCount");
+        if (null == followCount || taskChance > ((Integer)followCount)) {
             JSONArray array = obj.getJSONArray("followShops");
             Iterator<Object> it = array.iterator();
             while (it.hasNext()) {

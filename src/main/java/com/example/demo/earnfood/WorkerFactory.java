@@ -17,6 +17,10 @@ public class WorkerFactory {
                 return FollowChannelWorker.getInstance();
             case "ScanMarket" :
                 return ScanMarketWorker.getInstance();
+            case "ViewVideo" :
+                return ViewVideoWorker.getInstance();
+//            case "StealFoodAndCoin" :
+//                return StealFoodAndCoinWorker.getInstance();
             case "deskGoods" :
                 return DeskGoodsWorker.getInstance();
             default:
