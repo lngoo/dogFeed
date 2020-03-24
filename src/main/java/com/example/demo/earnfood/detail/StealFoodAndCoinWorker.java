@@ -45,8 +45,9 @@ public class StealFoodAndCoinWorker extends Worker {
 
     private void initCoinCount(String cookie, StealInfo stealInfo) {
         try {
+            String url = "https://draw.jdfcloud.com//pet/getCoinChanges?changeDate="+System.currentTimeMillis();
             Unirest.setTimeouts(0, 0);
-            HttpResponse<String> response = Unirest.get("https://draw.jdfcloud.com//pet/getCoinChanges?changeDate=1584843256706")
+            HttpResponse<String> response = Unirest.get(url)
                     .header("charset", "utf-8")
                     .header("referer", "https://servicewechat.com/wxccb5c536b0ecd1bf/525/page-frame.html")
                     .header("cookie", cookie)
@@ -109,15 +110,13 @@ public class StealFoodAndCoinWorker extends Worker {
                 if (StringUtils.pathEquals("chance_full", stealStatus)) {
                     stealInfo.setFoodCount(20);
                 }
-                if (StringUtils.pathEquals("can_steal", stealStatus)
-                 || StringUtils.pathEquals("chance_full", stealStatus)) {
-                    // 偷一个朋友的
-                    isTaskFull = doOneFriendSteal(friend, cookieKey, cookie, stealInfo);
-                    if (isTaskFull) {
-                        break;
-                    }
-                    ThreadUtil.sleepRandomSeconds(1, 5);
+
+                // 偷一个朋友的
+                isTaskFull = doOneFriendSteal(friend, cookieKey, cookie, stealInfo);
+                if (isTaskFull) {
+                    break;
                 }
+                ThreadUtil.sleepRandomSeconds(1, 5);
             }
             return isTaskFull || datas.size() < 20;
         }
@@ -133,30 +132,37 @@ public class StealFoodAndCoinWorker extends Worker {
      * @return 是否粮食偷满了
      */
     private boolean doOneFriendSteal(JSONObject friend, String cookieKey, String cookie, StealInfo stealInfo) {
-        String friendPin = URLEncoder.encode(friend.getString("friendPin"));
-        JSONObject friendHomeInfo = enterFriendHome(friendPin, cookie);
-        if (null != friendHomeInfo) {
-            JSONObject data = friendHomeInfo.getJSONObject("data");
-            int stealFood = data.getInteger("stealFood");
-            int friendHomeCoin = data.getInteger("friendHomeCoin");
-            System.out.println("### [cookie=" + cookieKey + "] StealFood food/coin num =" + stealFood + "/" + friendHomeCoin);
-            if (stealFood == 3) {
-                boolean result = doStealFood(cookie, friendPin);
-                if (result) {
-                    System.out.println("### [cookie=" + cookieKey + "] StealFood : steal one food.");
-                    stealInfo.addFoodCount();
+        try {
+            String friendPin = URLEncoder.encode(friend.getString("friendPin"));
+            JSONObject friendHomeInfo = enterFriendHome(friendPin, cookie);
+            if (null != friendHomeInfo) {
+                JSONObject data = friendHomeInfo.getJSONObject("data");
+                Object stealFoodObj = data.get("stealFood");
+                int stealFood = null == stealFoodObj ? 0 : (int)stealFoodObj;
+                Object friendHomeCoinObj = data.get("friendHomeCoin");
+                int friendHomeCoin =  null == friendHomeCoinObj ? 0 : (int)friendHomeCoinObj;
+                System.out.println("### [cookie=" + cookieKey + "] StealFood food/coin num =" + stealFood + "/" + friendHomeCoin);
+                if (stealFood == 3) {
+                    boolean result = doStealFood(cookie, friendPin);
+                    if (result) {
+                        System.out.println("### [cookie=" + cookieKey + "] StealFood : steal one food.");
+                        stealInfo.addFoodCount();
+                    }
                 }
-            }
-            if (friendHomeCoin == 5) {
-                boolean result = doStealCoin(cookie, friendPin);
-                if (result) {
-                    System.out.println("### [cookie=" + cookieKey + "] StealFood : steal one coin.");
-                    stealInfo.addCoinCount();
+                if (friendHomeCoin == 5) {
+                    boolean result = doStealCoin(cookie, friendPin);
+                    if (result) {
+                        System.out.println("### [cookie=" + cookieKey + "] StealFood : steal one coin.");
+                        stealInfo.addCoinCount();
+                    }
                 }
+                return isStealTaskFinished(stealInfo);
             }
-            return isStealTaskFinished(stealInfo);
+            return false;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
-        return false;
     }
 
     private boolean doStealCoin(String cookie, String friendPin) {

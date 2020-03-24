@@ -18,7 +18,7 @@ public class TaskStarter implements ApplicationRunner {
     private static Map<String, StealInfo> stealCounter = new ConcurrentHashMap<>();
     static {
         cookieMap.put("181", "pt_key=AAJeH3ONADBp11cof76ZapZjzQeqB7g57JX9kzJ0xmvgsbNiMZ17FIvaimSe-dVB2CBa_ZwHrW8");
-        cookieMap.put("152", "pt_key=AAJeWMxXADAhM5suAOxUdds4vH4UH3_3KdhxHJHjIyxewTiEfEAw7IqY3ddiaPC-JnHzGHoC6So");
+        cookieMap.put("o152", "pt_key=AAJeWMxXADAhM5suAOxUdds4vH4UH3_3KdhxHJHjIyxewTiEfEAw7IqY3ddiaPC-JnHzGHoC6So");
         cookieMap.put("171", "pt_key=AAJeWMlmADB4AHPOqA5MHzQwoMrl_J8cmOv4pMwvMto5A0GyqZK8No5sYMujMI_O01Yc6JQsDfg");
         cookieMap.put("xqq", "pt_key=AAJeWNCsADDIfJF76rnm8t1hWnArZi1sPNgf_spKO-m8Ya3abGJHuH9zBXZorOi1HRJXeyn5RDo");
     }
