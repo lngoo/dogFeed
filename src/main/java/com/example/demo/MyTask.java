@@ -42,6 +42,9 @@ public class MyTask implements Callable<Boolean> {
                 JSONObject data = JSONObject.parseObject(roomInfo).getJSONObject("data");
                 long lastFeedTime = data.getLong("lastFeedTime");
                 long remainMillSeconds = periodMillSeconds - (System.currentTimeMillis() - lastFeedTime);
+                if (remainMillSeconds < 0) {
+                    remainMillSeconds = 0;
+                }
                 System.out.println("### [cookie=" + cookieKey + "] try start timer. delayMillSeconds=" + remainMillSeconds + ". time = " + new Date().toLocaleString());
 
                 Timer timer = new Timer(true);    //treu就是守护线程
