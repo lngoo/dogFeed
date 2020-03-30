@@ -66,6 +66,7 @@ public class StealFoodAndCoinWorker extends Worker {
                     if (StringUtils.pathEquals("visit_friend", tempTypeInfo.getString("changeEvent"))) {
                         int changeCoin = tempTypeInfo.getInteger("changeCoin");
                         stealInfo.setCoinCount(changeCoin / 5);
+                        break;
                     }
                 }
             }
