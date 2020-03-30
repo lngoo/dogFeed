@@ -30,7 +30,7 @@ public class StealFoodAndCoinWorker extends Worker {
             // 初始化积分
             initCoinCount(cookie, stealInfo);
 
-            int pageNum = 1;
+            int pageNum = 5;
             while (!isStealTaskFinished(stealInfo)) {
                 // 做一页商品的任务
                 boolean isLastPage = doPageFriendsSteal(cookieKey, cookie, stealInfo, pageNum);
