@@ -87,7 +87,7 @@ public class MyTask implements Callable<Boolean> {
         }
     }
 
-    private void stealFoodAndCoin() {
+    private synchronized void stealFoodAndCoin() {
         StealFoodAndCoinWorker worker = (StealFoodAndCoinWorker) StealFoodAndCoinWorker.getInstance();
         worker.doRealJob(cookieKey, cookie, stealCounter.get(cookieKey));
         ThreadUtil.sleepRandomSeconds(3, 5);
