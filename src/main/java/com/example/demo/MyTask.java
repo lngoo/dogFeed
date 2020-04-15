@@ -94,39 +94,43 @@ public class MyTask implements Callable<Boolean> {
     }
 
     private void deskEarnTask() {
-        String resp = requester.getDeskTaskList(cookie);
-        if (null != resp) {
-            JSONObject obj = JSON.parseObject(resp);
-            String errorCode = obj.getString("errorCode");
-            boolean result = (null == errorCode || StringUtils.pathEquals("null", errorCode));
-            if (!result) {
-                System.out.println("### [cookie=" + cookieKey + "] failed get desk goods list = " + resp);
-                return;
-            }
+        try {
+            String resp = requester.getDeskTaskList(cookie);
+            if (null != resp) {
+                JSONObject obj = JSON.parseObject(resp);
+                String errorCode = obj.getString("errorCode");
+                boolean result = (null == errorCode || StringUtils.pathEquals("null", errorCode));
+                if (!result) {
+                    System.out.println("### [cookie=" + cookieKey + "] failed get desk goods list = " + resp);
+                    return;
+                }
 
-            JSONObject data = obj.getJSONObject("data");
-            int taskChance = data.getInteger("taskChance");
-            Object followCount = data.get("followCount");
-            if (null == followCount || ((Integer) followCount) < taskChance) {
-                JSONArray array = data.getJSONArray("deskGoods");
-                Iterator<Object> it = array.iterator();
-                int tempCount = (null == followCount ? 0 : (Integer) followCount);
-                while (it.hasNext()) {
-                    if (tempCount == taskChance) {
-                        break;
+                JSONObject data = obj.getJSONObject("data");
+                int taskChance = data.getInteger("taskChance");
+                Object followCount = data.get("followCount");
+                if (null == followCount || ((Integer) followCount) < taskChance) {
+                    JSONArray array = data.getJSONArray("deskGoods");
+                    Iterator<Object> it = array.iterator();
+                    int tempCount = (null == followCount ? 0 : (Integer) followCount);
+                    while (it.hasNext()) {
+                        if (tempCount == taskChance) {
+                            break;
+                        }
+                        JSONObject goodInfo = (JSONObject) it.next();
+                        boolean status = goodInfo.getBoolean("status");
+                        // 已经做过就不做了
+                        if (status) {
+                            continue;
+                        }
+                        Worker worker = WorkerFactory.getWorkerByType("deskGoods");
+                        worker.doJob(cookieKey, cookie, goodInfo);
+                        ThreadUtil.sleepRandomSeconds(3, 5);
+                        tempCount++;
                     }
-                    JSONObject goodInfo = (JSONObject) it.next();
-                    boolean status = goodInfo.getBoolean("status");
-                    // 已经做过就不做了
-                    if (status) {
-                        continue;
-                    }
-                    Worker worker = WorkerFactory.getWorkerByType("deskGoods");
-                    worker.doJob(cookieKey, cookie, goodInfo);
-                    ThreadUtil.sleepRandomSeconds(3, 5);
-                    tempCount++;
                 }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
